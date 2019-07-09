@@ -65,6 +65,21 @@ func (c *EncryptedCookie) Get(req *go_http.Request) (string, error) {
 
 func (c *EncryptedCookie) Set(rsp go_http.ResponseWriter, body string) error {
 
+	http_cookie := &go_http.Cookie{
+		Value: body,
+	}
+
+	return c.SetCookie(rsp, http_cookie)
+}
+
+func (c *EncryptedCookie) SetCookie(rsp go_http.ResponseWriter, http_cookie *go_http.Cookie) error {
+
+	if http_cookie.Name != "" {
+		return errors.New("Cookie name already set")
+	}
+
+	body := http_cookie.Value
+
 	opts := secretbox.NewSecretboxOptions()
 	opts.Salt = c.salt
 
@@ -80,12 +95,10 @@ func (c *EncryptedCookie) Set(rsp go_http.ResponseWriter, body string) error {
 		return err
 	}
 
-	http_cookie := go_http.Cookie{
-		Name:  c.name,
-		Value: string(enc),
-	}
+	http_cookie.Name = c.name
+	http_cookie.Value = enc
 
-	go_http.SetCookie(rsp, &http_cookie)
+	go_http.SetCookie(rsp, http_cookie)
 	return nil
 }
 
