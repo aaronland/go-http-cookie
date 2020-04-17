@@ -1,8 +1,8 @@
 # github.com/aaronland/go-roster v0.0.1
 github.com/aaronland/go-roster
-# github.com/aaronland/go-secretbox v0.1.0
+# github.com/aaronland/go-secretbox v0.2.0
 github.com/aaronland/go-secretbox
-# golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+# golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/pbkdf2
