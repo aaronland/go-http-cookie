@@ -6,17 +6,21 @@ import (
 	"github.com/aaronland/go-secretbox"
 	"net/http"
 	"net/url"
+	"github.com/awnumar/memguard"
 )
 
 func init() {
 	ctx := context.Background()
 	RegisterCookie(ctx, "encrypted", NewEncryptedCookie)
+
+	memguard.CatchInterrupt()
+	defer memguard.Purge()
 }
 
 type EncryptedCookie struct {
 	Cookie
 	name   string
-	secret string
+	secret *memguard.Enclave
 	salt   string
 }
 
@@ -46,9 +50,11 @@ func NewEncryptedCookie(ctx context.Context, uri string) (Cookie, error) {
 		return nil, errors.New("Missing salt")
 	}
 
+	secret_key := memguard.NewEnclave([]byte(secret))
+		
 	c := EncryptedCookie{
 		name:   name,
-		secret: secret,
+		secret: secret_key,
 		salt:   salt,
 	}
 
@@ -66,7 +72,15 @@ func (c *EncryptedCookie) Get(req *http.Request) (string, error) {
 	opts := secretbox.NewSecretboxOptions()
 	opts.Salt = c.salt
 
-	sb, err := secretbox.NewSecretbox(c.secret, opts)
+	secret, err := c.secret.Open()
+	
+	if err != nil {
+		return "", err
+	}
+	
+	defer secret.Destroy()
+	
+	sb, err := secretbox.NewSecretbox(secret.String(), opts)
 
 	if err != nil {
 		return "", err
@@ -102,7 +116,15 @@ func (c *EncryptedCookie) SetCookie(rsp http.ResponseWriter, http_cookie *http.C
 	opts := secretbox.NewSecretboxOptions()
 	opts.Salt = c.salt
 
-	sb, err := secretbox.NewSecretbox(c.secret, opts)
+	secret, err := c.secret.Open()
+	
+	if err != nil {
+		return  err
+	}
+	
+	defer secret.Destroy()
+	
+	sb, err := secretbox.NewSecretbox(secret.String(), opts)
 
 	if err != nil {
 		return err
