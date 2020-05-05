@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"github.com/aaronland/go-secretbox"
+	"github.com/awnumar/memguard"
 	"net/http"
 	"net/url"
-	"github.com/awnumar/memguard"
 )
 
 func init() {
@@ -14,7 +14,6 @@ func init() {
 	RegisterCookie(ctx, "encrypted", NewEncryptedCookie)
 
 	memguard.CatchInterrupt()
-	defer memguard.Purge()
 }
 
 type EncryptedCookie struct {
@@ -51,7 +50,7 @@ func NewEncryptedCookie(ctx context.Context, uri string) (Cookie, error) {
 	}
 
 	secret_key := memguard.NewEnclave([]byte(secret))
-		
+
 	c := EncryptedCookie{
 		name:   name,
 		secret: secret_key,
@@ -72,28 +71,20 @@ func (c *EncryptedCookie) Get(req *http.Request) (string, error) {
 	opts := secretbox.NewSecretboxOptions()
 	opts.Salt = c.salt
 
-	secret, err := c.secret.Open()
-	
-	if err != nil {
-		return "", err
-	}
-	
-	defer secret.Destroy()
-	
-	sb, err := secretbox.NewSecretbox(secret.String(), opts)
+	sb, err := secretbox.NewSecretboxWithEnclave(c.secret, opts)
 
 	if err != nil {
 		return "", err
 	}
 
-	body, err := sb.Unlock([]byte(http_cookie.Value))
+	unlocked, err := sb.Unlock(http_cookie.Value)
 
 	if err != nil {
 		return "", err
 	}
 
-	str_body := string(body)
-	return str_body, nil
+	defer unlocked.Destroy()
+	return unlocked.String(), nil
 }
 
 func (c *EncryptedCookie) Set(rsp http.ResponseWriter, body string) error {
@@ -117,13 +108,13 @@ func (c *EncryptedCookie) SetCookie(rsp http.ResponseWriter, http_cookie *http.C
 	opts.Salt = c.salt
 
 	secret, err := c.secret.Open()
-	
+
 	if err != nil {
-		return  err
+		return err
 	}
-	
+
 	defer secret.Destroy()
-	
+
 	sb, err := secretbox.NewSecretbox(secret.String(), opts)
 
 	if err != nil {
