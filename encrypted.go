@@ -60,12 +60,12 @@ func NewEncryptedCookie(ctx context.Context, uri string) (Cookie, error) {
 	return &c, nil
 }
 
-func (c *EncryptedCookie) Get(req *http.Request) (string, error) {
+func (c *EncryptedCookie) Get(req *http.Request) (*memguard.LockedBuffer, error) {
 
 	http_cookie, err := req.Cookie(c.name)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	opts := secretbox.NewSecretboxOptions()
@@ -74,35 +74,23 @@ func (c *EncryptedCookie) Get(req *http.Request) (string, error) {
 	sb, err := secretbox.NewSecretboxWithEnclave(c.secret, opts)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	unlocked, err := sb.Unlock(http_cookie.Value)
-
-	if err != nil {
-		return "", err
-	}
-
-	defer unlocked.Destroy()
-	return unlocked.String(), nil
+	return sb.Unlock(http_cookie.Value)
 }
 
-func (c *EncryptedCookie) Set(rsp http.ResponseWriter, body string) error {
+func (c *EncryptedCookie) Set(rsp http.ResponseWriter, buf *memguard.LockedBuffer) error {
 
-	http_cookie := &http.Cookie{
-		Value: body,
-	}
-
-	return c.SetCookie(rsp, http_cookie)
+	http_cookie := &http.Cookie{}
+	return c.SetWithCookie(rsp, buf, http_cookie)
 }
 
-func (c *EncryptedCookie) SetCookie(rsp http.ResponseWriter, http_cookie *http.Cookie) error {
+func (c *EncryptedCookie) SetWithCookie(rsp http.ResponseWriter, buf *memguard.LockedBuffer, http_cookie *http.Cookie) error {
 
 	if http_cookie.Name != "" {
 		return errors.New("Cookie name already set")
 	}
-
-	body := http_cookie.Value
 
 	opts := secretbox.NewSecretboxOptions()
 	opts.Salt = c.salt
@@ -121,7 +109,7 @@ func (c *EncryptedCookie) SetCookie(rsp http.ResponseWriter, http_cookie *http.C
 		return err
 	}
 
-	enc, err := sb.Lock([]byte(body))
+	enc, err := sb.LockWithBuffer(buf)
 
 	if err != nil {
 		return err
