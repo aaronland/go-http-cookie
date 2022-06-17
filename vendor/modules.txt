@@ -4,16 +4,16 @@ github.com/aaronland/go-roster
 # github.com/aaronland/go-secretbox v1.0.0
 ## explicit
 github.com/aaronland/go-secretbox
-# github.com/aaronland/go-string v0.1.2
+# github.com/aaronland/go-string v1.0.0
 ## explicit
 github.com/aaronland/go-string/random
-# github.com/awnumar/memcall v0.0.0-20191004114545-73db50fd9f80
+# github.com/awnumar/memcall v0.1.2
 github.com/awnumar/memcall
-# github.com/awnumar/memguard v0.22.2
+# github.com/awnumar/memguard v0.22.3
 ## explicit
 github.com/awnumar/memguard
 github.com/awnumar/memguard/core
-# golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88
+# golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle

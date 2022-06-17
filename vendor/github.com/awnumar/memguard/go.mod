@@ -1,9 +1,14 @@
 module github.com/awnumar/memguard
 
-go 1.14
+go 1.18
 
 require (
-	github.com/awnumar/memcall v0.0.0-20191004114545-73db50fd9f80
-	golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4
-	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
+	github.com/awnumar/memcall v0.1.2
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
+	lukechampine.com/frand v1.4.2
+)
+
+require (
+	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 )
